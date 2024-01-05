@@ -1,0 +1,40 @@
+Run 7: RoBERTa
+balanced
+NLL loss
+weighted F1: 0.619
+
+======== Epoch 1 / 3 ========
+Training...
+
+  Average training loss: 0.94
+  Training epoch took: 0:09:48
+
+Validation...
+  Macro F1: 0.44
+  Validation Loss: 0.92
+  Validation took: 0:00:51
+
+======== Epoch 2 / 3 ========
+Training...
+
+  Average training loss: 0.77
+  Training epoch took: 0:09:51
+
+Validation...
+  Macro F1: 0.48
+  Validation Loss: 0.83
+  Validation took: 0:00:51
+
+======== Epoch 3 / 3 ========
+Training...
+
+  Average training loss: 0.64
+  Training epoch took: 0:09:51
+
+Validation...
+  Macro F1: 0.45
+  Validation Loss: 0.99
+  Validation took: 0:00:50
+
+Training complete!
+Total training took 0:32:03 (h:mm:ss)
