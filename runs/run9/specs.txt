@@ -1,0 +1,47 @@
+Run 9: all-mpnet-base-v2
+balanced
+Cross-Entropy (given)
+test-set weighted F1: 0.671
+dev-set weighted F1: 0.576
+
+2024-01-04 18:21:18 - Read STSbenchmark train dataset
+2024-01-04 18:21:18 - Read STSbenchmark dev dataset
+2024-01-04 18:21:18 - Warmup-steps: 99
+Epoch:   0%|          | 0/4 [00:00<?, ?it/s]
+Iteration: 100%|██████████| 246/246 [01:22<00:00,  2.97it/s]
+Epoch:   0%|          | 0/4 [01:22<?, ?it/s]
+2024-01-04 18:22:41 - EmbeddingSimilarityEvaluator: Evaluating the model on sts-dev dataset after epoch 0:
+Epoch:   0%|          | 0/4 [01:29<?, ?it/s]
+2024-01-04 18:22:48 - Cosine-Similarity :	Pearson: 0.4187	Spearman: 0.3995
+2024-01-04 18:22:48 - Manhattan-Distance:	Pearson: 0.4121	Spearman: 0.3976
+2024-01-04 18:22:48 - Euclidean-Distance:	Pearson: 0.4132	Spearman: 0.3995
+2024-01-04 18:22:48 - Dot-Product-Similarity:	Pearson: 0.4187	Spearman: 0.3995
+2024-01-04 18:22:48 - Save model to output/training_stsbenchmark_continue_training-all-mpnet-base-v2-2024-01-04_18-21-18
+Iteration: 100%|██████████| 246/246 [01:22<00:00,  2.99it/s]
+Epoch:  25%|██▌       | 1/4 [02:53<04:32, 90.73s/it]
+2024-01-04 18:24:11 - EmbeddingSimilarityEvaluator: Evaluating the model on sts-dev dataset after epoch 1:
+Epoch:  25%|██▌       | 1/4 [03:00<04:32, 90.73s/it]
+2024-01-04 18:24:18 - Cosine-Similarity :	Pearson: 0.4302	Spearman: 0.4108
+2024-01-04 18:24:18 - Manhattan-Distance:	Pearson: 0.4252	Spearman: 0.4103
+2024-01-04 18:24:18 - Euclidean-Distance:	Pearson: 0.4257	Spearman: 0.4108
+2024-01-04 18:24:18 - Dot-Product-Similarity:	Pearson: 0.4302	Spearman: 0.4108
+2024-01-04 18:24:18 - Save model to output/training_stsbenchmark_continue_training-all-mpnet-base-v2-2024-01-04_18-21-18
+Iteration: 100%|██████████| 246/246 [01:22<00:00,  3.00it/s]
+Epoch:  50%|█████     | 2/4 [04:23<03:00, 90.46s/it]
+2024-01-04 18:25:41 - EmbeddingSimilarityEvaluator: Evaluating the model on sts-dev dataset after epoch 2:
+Epoch:  50%|█████     | 2/4 [04:30<03:00, 90.46s/it]
+2024-01-04 18:25:48 - Cosine-Similarity :	Pearson: 0.4310	Spearman: 0.4184
+2024-01-04 18:25:48 - Manhattan-Distance:	Pearson: 0.4245	Spearman: 0.4180
+2024-01-04 18:25:48 - Euclidean-Distance:	Pearson: 0.4245	Spearman: 0.4184
+2024-01-04 18:25:48 - Dot-Product-Similarity:	Pearson: 0.4310	Spearman: 0.4184
+2024-01-04 18:25:48 - Save model to output/training_stsbenchmark_continue_training-all-mpnet-base-v2-2024-01-04_18-21-18
+Iteration: 100%|██████████| 246/246 [01:22<00:00,  3.00it/s]
+Epoch:  75%|███████▌  | 3/4 [05:52<01:30, 90.24s/it]
+2024-01-04 18:27:11 - EmbeddingSimilarityEvaluator: Evaluating the model on sts-dev dataset after epoch 3:
+Epoch: 100%|██████████| 4/4 [05:59<00:00, 89.99s/it]
+2024-01-04 18:27:18 - Cosine-Similarity :	Pearson: 0.4249	Spearman: 0.4121
+2024-01-04 18:27:18 - Manhattan-Distance:	Pearson: 0.4192	Spearman: 0.4115
+2024-01-04 18:27:18 - Euclidean-Distance:	Pearson: 0.4193	Spearman: 0.4121
+2024-01-04 18:27:18 - Dot-Product-Similarity:	Pearson: 0.4249	Spearman: 0.4121
+2024-01-04 18:27:18 - Load pretrained SentenceTransformer: output/training_stsbenchmark_continue_training-all-mpnet-base-v2-2024-01-04_18-21-18
+2024-01-04 18:27:18 - Use pytorch device: cuda
