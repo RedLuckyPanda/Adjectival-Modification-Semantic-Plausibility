@@ -1,19 +1,17 @@
-import pandas as pd
-import numpy as np
-from tqdm import tqdm
-from typing import Tuple
+import torch
 import random
-import matplotlib.pyplot as plt
-import seaborn as sns
-sns.set_theme()
 import time
 import datetime
-from sklearn.metrics import f1_score, confusion_matrix
-
-import torch
-from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
+import pandas as pd
+import numpy as np
+import seaborn as sns
+from tqdm import tqdm
+from typing import Tuple
 from torch.optim import AdamW
+from sklearn.metrics import f1_score, confusion_matrix
 from transformers import get_linear_schedule_with_warmup
+from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
+sns.set_theme()
 
 def match_input() -> str:
     user_input = input()
@@ -33,11 +31,14 @@ def match_input() -> str:
     return model_name
 
 def f1_one_vs_all(true, pred, class_label):
-    # create true list with 1 for the labels we care about and 0 for the others
-    # create pred list with 1 for instances predicted to be the label we care about and 0 for the others
-    # calculate the f1 for these lists to get the f1 score for only the class we're interested in
+    """
+    Calculate F1 score for one individual class
+    """
+    # Create "true" list with 1 for the labels we care about and 0 for the others
     true = [0 if v != class_label else 1 for v in true]
+    # Create "pred" list with 1 for instances predicted to be the label we care about and 0 for the others
     pred = [0 if v != class_label else 1 for v in pred]
+    # Calculate the f1 for these lists to get the f1 score for only the class we're interested in
     return f1_score(true, pred)
 
 def flat_f1_score(y_true, y_pred, average='macro'):
@@ -262,6 +263,7 @@ if __name__ == '__main__':
     training_stats = []
     total_t0 = time.time()
 
+    # load a saved model if a path is given, otherwise train the given model
     if model_path != "":
         model = torch.load(model_path)
     else:
