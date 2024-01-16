@@ -11,9 +11,10 @@ The `transformer` folder contains the code for fine-tuning pre-trained transform
 
 ## Quick Start
 To run the code, please do the following:
-1. Clone the repository to your system with `git clone`
-2. Go to the repository directory: `cd SemanticPlausibility_23-24`
-3. Install the project dependencies: `pip install -r requirements.txt`
-4. To run one of the Jupyter notebooks, use this command: `jupyter notebook`. The Jupyter interface will open in a browser window, where you can navigate through the file system and choose a notebook to run.
-5. To train and evaluate a transformer model run: `python transformer/train_and_evaluate_transformer.py`
-6. To train and evaluate the sentence-transformer model run: `python sentence-transformer/train_and_evaluate_sentence-transformer.py`
+1. Install >**Python 3.10**< or higher.
+2. Clone the repository to your system with `git clone`
+3. Go to the repository directory: `cd SemanticPlausibility_23-24`
+4. Install the project dependencies: `pip install -r requirements.txt`
+5. To run one of the Jupyter notebooks, use this command: `jupyter notebook`. The Jupyter interface will open in a browser window, where you can navigate through the file system and choose a notebook to run.
+6. To train and evaluate a transformer model run: `python transformer/train_and_evaluate_transformer.py`
+7. To train and evaluate the sentence-transformer model run: `python sentence-transformer/train_and_evaluate_sentence-transformer.py`
