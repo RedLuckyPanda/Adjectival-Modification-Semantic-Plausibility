@@ -1,0 +1,7 @@
+pandas
+numpy
+seaborn
+tqdm
+scikit-learn
+transformers
+sentence-transformers
