@@ -11,7 +11,7 @@ The `transformer` folder contains the code for fine-tuning pre-trained transform
 
 ## Quick Start
 To run the code, please do the following:
-1. Install >**Python 3.10**< or higher.
+1. Make sure your installation of Python is >**version 3.10**< or higher. If necessary, [update Python](https://www.python.org/downloads/).
 2. Clone the repository to your system with `git clone`
 3. Go to the repository directory: `cd SemanticPlausibility_23-24`
 4. Install the project dependencies: `pip install -r requirements.txt`
