@@ -1,8 +1,10 @@
-# Modeling Semantic Plausibility (WS 2023/24) (by Anna Golub and Beate Zywietz)
+# Modeling Semantic Plausibility (WS 2023/24) - Anna Golub and Beate Zywietz
 
+## Overview
 This repository is dedicated to modeling semantic plausibility with large language models and the [ADEPT](https://aclanthology.org/2021.acl-long.553/) dataset.
 
-## Code Overview
+`adept_dataset_analysis.ipynb` - first look at the data using descriptive statistics
+
 `transformer_finetuning.ipynb` - fine-tuning pre-trained transformer models ([BERT](https://huggingface.co/docs/transformers/model_doc/bert), [DeBERTa](https://huggingface.co/docs/transformers/model_doc/deberta), [RoBERTa](https://huggingface.co/docs/transformers/model_doc/roberta), [MPNet](https://huggingface.co/sentence-transformers/all-mpnet-base-v2)) on the ADEPT dataset with performance evaluation
 
 `sentence-transformer_finetuning.ipynb` - fine-tuning a pre-trained sentence transformer model on the ADEPT dataset with performance evaluation
