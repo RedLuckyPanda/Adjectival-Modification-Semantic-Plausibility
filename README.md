@@ -12,6 +12,6 @@ This repository is dedicated to modeling semantic plausibility with the use of l
 ## Quick Start
 To run the code, please do the following:
 1. Clone the repository to your system with `git clone`
-2. Go to the repository directory `SemanticPlausibility_23-24`
-3. Install the project dependencies using `pip install -r requirements.txt`
+2. Go to the repository directory: `cd SemanticPlausibility_23-24`
+3. Install the project dependencies: `pip install -r requirements.txt`
 4. Run a notebook of your choice using this command: #TODO
