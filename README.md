@@ -1,7 +1,7 @@
 # Modeling Semantic Plausibility (WS 2023/24) - Anna Golub and Beate Zywietz
 
 ## Overview
-This repository is dedicated to modeling semantic plausibility with large language models and the [ADEPT](https://aclanthology.org/2021.acl-long.553/) dataset.
+This repository is dedicated to modeling semantic plausibility with the use of large language models and the [ADEPT](https://aclanthology.org/2021.acl-long.553/) dataset.
 
 `adept_dataset_analysis.ipynb` - first look at the data using descriptive statistics
 
