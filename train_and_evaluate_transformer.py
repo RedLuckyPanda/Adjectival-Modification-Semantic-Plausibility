@@ -77,10 +77,10 @@ def tokenize(input_text: list[str]) -> Tuple[torch.Tensor, torch.Tensor]:
 
 if __name__ == '__main__':
     balanced = True  # switch between balanced and full dataset
-    run_ID = 12
+    run_ID = 12  # to identify the results later
     epochs = 3
     balance_test = False  # enable balancing the test and dev datasets
-    model_path = "./runs/run6/DeBERTa_6_balanced.pt"  # give the path to load a saved model
+    model_path = ""  # give a path to load a saved model
 
     # take console input to pick a model
     print("This program is used to train and evaluate transformer models from huggingface")
@@ -393,6 +393,7 @@ if __name__ == '__main__':
             test_set_predictions.append(predictions)
 
             del batch
+   
     # create confusion matrix
     test_set_predictions = np.concatenate(test_set_predictions, axis=0)
     norm_setting = 'true'
