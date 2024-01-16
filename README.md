@@ -14,4 +14,13 @@ To run the code, please do the following:
 1. Clone the repository to your system with `git clone`
 2. Go to the repository directory: `cd SemanticPlausibility_23-24`
 3. Install the project dependencies: `pip install -r requirements.txt`
-4. Run a notebook of your choice using this command: #TODO
+4. To train and evaluate a transformer model run `python train_and_evaluate_transformer.py`
+5. To train and evaluate the sentence-transformer model run `train_and_evaluate_sentence-transformer.py`
+
+## Code Documentation
+While the .py files contain comments to explain a code, the .ipynb files provide a more detailed step-by-step documentation.
+
+
+Open the .ipynb files in a notebook editor of your chioce, or install Jupyter Notebook. 
+To install Jupiter notebook run `pip install notebook`, then run `jupyter notebook` to open the application. 
+
