@@ -5,7 +5,7 @@ This repository is dedicated to modeling semantic plausibility with the use of l
 
 `adept_dataset_analysis.ipynb` - first look at the data using descriptive statistics
 
-`sentence-transformer_finetuning.ipynb` - fine-tuning a pre-trained sentence transformer model based on [MPNet](https://huggingface.co/sentence-transformers/all-mpnet-base-v2)) on the ADEPT dataset with performance evaluation
+`sentence-transformer_finetuning.ipynb` - fine-tuning a pre-trained sentence transformer model based on [MPNet](https://huggingface.co/sentence-transformers/all-mpnet-base-v2) on the ADEPT dataset with performance evaluation
 
 `transformer_finetuning.ipynb` - fine-tuning pre-trained transformer models ([BERT](https://huggingface.co/docs/transformers/model_doc/bert), [DeBERTa](https://huggingface.co/docs/transformers/model_doc/deberta), [RoBERTa](https://huggingface.co/docs/transformers/model_doc/roberta), [MPNet](https://huggingface.co/microsoft/mpnet-base)) on the ADEPT dataset with performance evaluation
 
