@@ -18,3 +18,7 @@ To run the code, please do the following:
 5. To run one of the Jupyter notebooks, use this command: `jupyter notebook`. The Jupyter interface will open in a browser window, where you can navigate through the file system and choose a notebook to run.
 6. To train and evaluate a **transformer** model, run: `python transformer/train_and_evaluate_transformer.py`
 7. To train and evaluate the **sentence-transformer** model, run: `python sentence-transformer/train_and_evaluate_sentence-transformer.py`
+
+## References
+The code is partially based on these tutorials:
+1. [BERT Fine-Tuning Tutorial with PyTorch](https://mccormickml.com/2019/07/22/BERT-fine-tuning/) By Chris McCormick and Nick Ryan
