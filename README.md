@@ -22,3 +22,4 @@ To run the code, please do the following:
 ## References
 The code is partially based on these tutorials:
 1. [BERT Fine-Tuning Tutorial with PyTorch](https://mccormickml.com/2019/07/22/BERT-fine-tuning/) By Chris McCormick and Nick Ryan
+2. [The documentation for semantic textual similarity on SBERT.net](https://www.sbert.net/docs/usage/semantic_textual_similarity.html), the source of the sentence-transformer.
