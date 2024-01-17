@@ -396,14 +396,16 @@ if __name__ == '__main__':
                                     attention_mask=b_input_mask,
                                     labels=b_labels)
             loss, logits = output.loss, output.logits
-            logits = logits.detach().cpu().numpy()
-            predictions = np.argmax(logits, axis=1).flatten()
+            pred_proba = softmax(logits, dim=-1).detach().cpu().numpy() 
+            predictions = np.argmax(logits.detach().cpu().numpy(), axis=1).flatten()  
             test_set_predictions.append(predictions)
+            test_set_proba.append(pred_proba)
 
             del batch
    
     # create confusion matrix
     test_set_predictions = np.concatenate(test_set_predictions, axis=0)
+    test_set_proba = np.concatenate(test_set_proba, axis=0)
     norm_setting = 'true'
     test_conf_matr = confusion_matrix(df[df['set'] == 'test']['label'].to_list(), test_set_predictions,
                                     normalize=norm_setting)
@@ -425,7 +427,7 @@ if __name__ == '__main__':
                             f1_one_vs_all(test_labels, test_set_predictions, class_label=1), \
                             f1_one_vs_all(test_labels, test_set_predictions, class_label=2)
     print("\nclass-wise F1 scores for the test set:")
-    print(f'1: {f1_less:.2f}\n2: {f1_eq:.2f}\n3: {f1_more:.2f}')
+    print(f'1 - Less likely: {f1_less:.2f}\n2 - Equally likely: {f1_eq:.2f}\n3 - More likely: {f1_more:.2f}')
 
-
-
+    roc_auc_test = roc_auc_score(test_labels, test_set_proba, average='macro', multi_class='ovo')
+    print(f'\nROC-AUC: {roc_auc_test:.2f}')
