@@ -40,14 +40,92 @@ def f1_one_vs_all(true, pred, class_label):
     return f1_score(true, pred)
 
 
+def crossvalidation(df, model):
+    step = 101
+    full_test_y_true = []
+    full_test_y_pred = []
+    all_macroF1 = 0
+    all_label1_F1 = 0
+    all_label2_F2 = 0
+    all_label3_F3 = 0
+    for i in range(1, len(df[df['set'] == 'test'].loc[(df['label'] == 0.5)]['label'].to_list())+1, step):
+        # get df slices containing 101 entries for each label
+        new_df = df[df['set'] == 'test'].loc[(df['label'] == 0)][i:i+step]
+        new_df = pd.concat([new_df, df[df['set'] == 'test'].loc[(df['label'] == 0.5)][i:i+step]]) 
+        new_df = pd.concat([new_df, df[df['set'] == 'test'].loc[(df['label'] == 1)][i:i+step]]) 
+        for i in [0, 0.5, 1]:
+            if len(new_df.loc[(new_df['label'] == i)]['label'].to_list()) < step:
+                wrap_around = step - len(new_df.loc[(new_df['label'] == i)]['label'].to_list())
+                new_df = pd.concat([new_df, df[df['set'] == 'test'].loc[(df['label'] == i)][:wrap_around]])
+        new_df = new_df.drop(columns=['sent_concat'])
+
+        # evaluation
+        test_sent1 = new_df['sentence1'].to_list()
+        test_sent2 = new_df['sentence2'].to_list()
+        test_labels = new_df['label'].to_list()
+
+        #Compute embedding for both lists
+        test_embeddings1 = model.encode(test_sent1, convert_to_tensor=True)
+        test_embeddings2 = model.encode(test_sent2, convert_to_tensor=True)
+        
+        #Compute cosine-similarities
+        test_cosine_scores = util.cos_sim(test_embeddings1, test_embeddings2)
+
+        # map the continous cosine similarities to the three classes
+        test_y_pred = []
+        for i in range(len(test_sent1)):
+            if test_cosine_scores[i][i] <= lower_threshold:
+                test_y_pred.append(0)
+            elif test_cosine_scores[i][i] >= upper_threshold:
+                test_y_pred.append(2)
+            else: test_y_pred.append(1)
+        test_y_true = [x*2 for x in new_df['label'].to_list()]
+        # save true and predicted lists to make one big confusion matrix later
+        full_test_y_true.extend(test_y_true)
+        full_test_y_pred.extend(test_y_pred)
+        
+        macro_f1 = f1_score(test_y_true, test_y_pred, average='macro')
+        all_macroF1 += macro_f1
+        
+        f1_less, f1_eq, f1_more = f1_one_vs_all(test_y_true, test_y_pred, class_label=0), \
+                                f1_one_vs_all(test_y_true, test_y_pred, class_label=1), \
+                                f1_one_vs_all(test_y_true, test_y_pred, class_label=2)
+        all_label1_F1 += f1_less
+        all_label2_F2 += f1_eq
+        all_label3_F3 += f1_more
+    print()
+    print("average stats")
+    count = 11
+    avr_MacroF1 = all_macroF1 / count
+    print("macro F1:")
+    print('test set: {:.3}'.format(avr_MacroF1))
+    avr_label1_F1 = all_label1_F1 / count
+    avr_label2_F2 = all_label2_F2 / count
+    avr_label3_F3 = all_label3_F3 / count
+    print("\nclass-wise F1 scores for the test set:")
+    print(f'1: {avr_label1_F1:.2f}\n2: {avr_label2_F2:.2f}\n3: {avr_label3_F3:.2f}')
+
+    # create confusion matrix
+    norm_setting = 'true'
+    test_conf_matr = confusion_matrix(full_test_y_true, full_test_y_pred, normalize=norm_setting)
+    test_conf_matr = pd.DataFrame(test_conf_matr, columns=['Less likely', 'Equally likely', 'More likely'],
+                                index=['Less likely', 'Equally likely', 'More likely'])
+    print("")
+    print("True\\Predicted:")
+    print(test_conf_matr)
+
+
 if __name__ == '__main__':
     # switch model here: currently only supports all-mpnet-base-v2
     model_name = "all-mpnet-base-v2"
     balanced = True  # switch between balanced and full dataset
-    run_ID = 12  # to identify the results later
+    run_ID = 102  # to identify the results later (restarted count at 100 to differentiate new runs)
     epochs = 4
     balance_test = False  # enable balancing the test and dev datasets
+    crossvalidate = True  # enable crossvalidation on the test set, balance_test has to be False
     model_path = ""  # give a path to load a saved model
+    lower_threshold = 0.33
+    upper_threshold = 0.66
 
     print(f'Starting training and evaluation for {model_name}')
 
@@ -90,15 +168,15 @@ if __name__ == '__main__':
     train = df[df['set'] == 'train']
     dev = df[df['set'] == 'dev']
     test = df[df['set'] == 'test']
+
     if balanced:
         train = pd.concat([
             train[train['label'].isin([0, 1])],
             train[train['label'] == 0.5].sample(1500, random_state=seed_val)
         ])
     train['label'].value_counts()
+    
     # Balance the dev and test by randomly sampling datapoints to match the smallest class
-    # So far this option has only been used in experiments to see how the class imbalance effects
-    # the results. It is not used in this execution.
     if balance_test:
         test = pd.concat([
             test[test['label'].isin([1])],
@@ -106,7 +184,7 @@ if __name__ == '__main__':
             test[test['label'] == 0.5].sample(101, random_state=seed_val)
         ])
         dev = pd.concat([
-            dev[dev['label'].isin([0, 1])],
+            dev[dev['label'].isin([1])],
             dev[dev['label'] == 0].sample(102, random_state=seed_val),
             dev[dev['label'] == 0.5].sample(102, random_state=seed_val)
         ])
@@ -129,7 +207,9 @@ if __name__ == '__main__':
     # load the given model
     print("Loading model...")
     if model_path != "":
-        model = torch.load(model_path)
+        model = SentenceTransformer(model_path)
+    elif model_path == "base":
+        model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
     else:
         model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
         model.to(device)
@@ -156,7 +236,6 @@ if __name__ == '__main__':
 
         # Train the model
         model.fit(train_objectives=[(train_dataloader, train_loss)],
-                #evaluator=evaluator,
                 epochs=num_epochs,
                 evaluation_steps=1000,
                 warmup_steps=warmup_steps)
@@ -164,50 +243,50 @@ if __name__ == '__main__':
     model.eval()
     model.cpu()
 
-    # evaluate on the test set
-    test_sent1 = df[df['set'] == 'test']['sentence1'].to_list()
-    test_sent2 = df[df['set'] == 'test']['sentence2'].to_list()
-    test_labels = df[df['set'] == 'test']['label'].to_list()
+    if crossvalidate:
+        crossvalidation(df, model)
+    else:
+        # evaluate on the test set
+        test_sent1 = df[df['set'] == 'test']['sentence1'].to_list()
+        test_sent2 = df[df['set'] == 'test']['sentence2'].to_list()
+        test_labels = df[df['set'] == 'test']['label'].to_list()
 
-    #Compute embedding for both lists
-    test_embeddings1 = model.encode(test_sent1, convert_to_tensor=True)
-    test_embeddings2 = model.encode(test_sent2, convert_to_tensor=True)
-    
-    #Compute cosine-similarities
-    test_cosine_scores = util.cos_sim(test_embeddings1, test_embeddings2)
+        #Compute embedding for both lists
+        test_embeddings1 = model.encode(test_sent1, convert_to_tensor=True)
+        test_embeddings2 = model.encode(test_sent2, convert_to_tensor=True)
+        
+        #Compute cosine-similarities
+        test_cosine_scores = util.cos_sim(test_embeddings1, test_embeddings2)
 
-    # map the continous cosine similarities to the three classes
-    # currently this is done using an arbitrary cut-off point,
-    # later we want to calculate a mean score for each class
-    # and use the distance to that score to determine the classes instead
-    test_y_pred = []
-    for i in range(len(test_sent1)):
-        if test_cosine_scores[i][i] < 0.25:
-            test_y_pred.append(0)
-        elif test_cosine_scores[i][i] > 0.75:
-            test_y_pred.append(2)
-        else: test_y_pred.append(1)
-    test_y_true = [x*2 for x in df[df['set'] == 'test']['label'].to_list()]
-    
-    # create confusion matrix
-    norm_setting = 'true'
-    test_conf_matr = confusion_matrix(test_y_true, test_y_pred, normalize=norm_setting)
-    test_conf_matr = pd.DataFrame(test_conf_matr, columns=['Less likely', 'Equally likely', 'More likely'],
-                                index=['Less likely', 'Equally likely', 'More likely'])
-    print("")
-    print("True\\Predicted:")
-    print(test_conf_matr)
+        # map the continous cosine similarities to the three classes
+        test_y_pred = []
+        for i in range(len(test_sent1)):
+            if test_cosine_scores[i][i] <= lower_threshold:
+                test_y_pred.append(0)
+            elif test_cosine_scores[i][i] >= upper_threshold:
+                test_y_pred.append(2)
+            else: test_y_pred.append(1)
+        test_y_true = [x*2 for x in df[df['set'] == 'test']['label'].to_list()]
+        
+        # create confusion matrix
+        norm_setting = 'true'
+        test_conf_matr = confusion_matrix(test_y_true, test_y_pred, normalize=norm_setting)
+        test_conf_matr = pd.DataFrame(test_conf_matr, columns=['Less likely', 'Equally likely', 'More likely'],
+                                    index=['Less likely', 'Equally likely', 'More likely'])
+        print("")
+        print("True\\Predicted:")
+        print(test_conf_matr)
 
-    # print stats
-    print("")
-    print("macro F1:")
-    print('test set: {:.3}'.format(f1_score(test_y_true, test_y_pred, average='macro')))
-    print("\nweighted F1:")
-    print('test set: {:.3}'.format(f1_score(test_y_true, test_y_pred, average='weighted')))
+        # print stats
+        print("")
+        print("macro F1:")
+        print('test set: {:.3}'.format(f1_score(test_y_true, test_y_pred, average='macro')))
+        print("\nweighted F1:")
+        print('test set: {:.3}'.format(f1_score(test_y_true, test_y_pred, average='weighted')))
 
-    test_labels = df[df['set'] == 'test']['label'].to_list()
-    f1_less, f1_eq, f1_more = f1_one_vs_all(test_y_true, test_y_pred, class_label=0), \
-                            f1_one_vs_all(test_y_true, test_y_pred, class_label=1), \
-                            f1_one_vs_all(test_y_true, test_y_pred, class_label=2)
-    print("\nclass-wise F1 scores for the test set:")
-    print(f'1: {f1_less:.2f}\n2: {f1_eq:.2f}\n3: {f1_more:.2f}')
+        test_labels = df[df['set'] == 'test']['label'].to_list()
+        f1_less, f1_eq, f1_more = f1_one_vs_all(test_y_true, test_y_pred, class_label=0), \
+                                f1_one_vs_all(test_y_true, test_y_pred, class_label=1), \
+                                f1_one_vs_all(test_y_true, test_y_pred, class_label=2)
+        print("\nclass-wise F1 scores for the test set:")
+        print(f'1: {f1_less:.2f}\n2: {f1_eq:.2f}\n3: {f1_more:.2f}')
