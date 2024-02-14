@@ -8,9 +8,10 @@ import seaborn as sns
 from tqdm import tqdm
 from typing import Tuple
 from torch.optim import AdamW
-from sklearn.metrics import f1_score, confusion_matrix
+from sklearn.metrics import f1_score, confusion_matrix, roc_auc_score
 from transformers import get_linear_schedule_with_warmup
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
+from torch.nn.functional import softmax
 sns.set_theme()
 
 
@@ -31,7 +32,6 @@ def match_input() -> str:
             model_name = ""
     return model_name
 
-
 def f1_one_vs_all(true, pred, class_label):
     """
     Calculate F1 score for one individual class
@@ -43,11 +43,9 @@ def f1_one_vs_all(true, pred, class_label):
     # Calculate the f1 for these lists to get the f1 score for only the class we're interested in
     return f1_score(true, pred)
 
-
 def flat_f1_score(y_true, y_pred, average='macro'):
     y_pred = np.argmax(y_pred, axis=1).flatten()
     return f1_score(y_true, y_pred, average=average)
-
 
 def format_time(elapsed):
     '''
@@ -58,7 +56,6 @@ def format_time(elapsed):
 
     # Format as hh:mm:ss
     return str(datetime.timedelta(seconds=elapsed_rounded))
-
 
 def tokenize(input_text: list[str]) -> Tuple[torch.Tensor, torch.Tensor]:
     input_ids = []
@@ -81,12 +78,121 @@ def tokenize(input_text: list[str]) -> Tuple[torch.Tensor, torch.Tensor]:
     attention_masks = torch.cat(attention_masks, dim=0)
     return input_ids, attention_masks
 
+def evaluation(test_dataloader, device, model_name, model, criterion, logsoftmax):
+    print("Evaluating...")
+    test_set_predictions, test_set_proba = [], []
+    for batch in tqdm(test_dataloader):
+            b_input_ids = batch[0].to(device)
+            b_input_mask = batch[1].to(device)
+            b_labels = batch[2].to(device)
+
+            with torch.no_grad():
+                if model_name == "MPNet":
+                    output = model(b_input_ids,
+                                    attention_mask=b_input_mask,
+                                    labels=b_labels)
+                else:
+                    output = model(b_input_ids,
+                                    token_type_ids=None,
+                                    attention_mask=b_input_mask,
+                                    labels=b_labels)
+            loss, logits = output.loss, output.logits
+            loss = criterion(logsoftmax(logits), b_labels)
+            pred_proba = softmax(logits, dim=-1).detach().cpu().numpy()  # pred class probabilities
+            predictions = np.argmax(logits.detach().cpu().numpy(), axis=1).flatten()   # pred class labels
+            test_set_predictions.append(predictions)
+            test_set_proba.append(pred_proba)
+
+            del batch
+   
+    test_set_predictions = np.concatenate(test_set_predictions, axis=0)
+    test_set_proba = np.concatenate(test_set_proba, axis=0)
+    return test_set_predictions, test_set_proba
+
+def crossvalidation(df, device, model_name, model, criterion, logsoftmax, dev_or_test='test'):
+    if dev_or_test == 'test':
+        step = 101
+    else:
+        dev_or_test = 'dev'
+        step = 102
+    full_test_y_true = []
+    full_test_y_pred = []
+    all_macroF1 = 0
+    all_roc_auc = 0
+    all_label1_F1 = 0
+    all_label2_F2 = 0
+    all_label3_F3 = 0
+    iterations = 0
+    for i in range(1, len(df[df['set'] == dev_or_test].loc[(df['label'] == 1)]['label'].to_list())+1, step):
+        # get df slices containing 101 entries for each label
+        new_df = df[df['set'] == dev_or_test].loc[(df['label'] == 0)][i:i+step]
+        new_df = pd.concat([new_df, df[df['set'] == dev_or_test].loc[(df['label'] == 1)][i:i+step]]) 
+        new_df = pd.concat([new_df, df[df['set'] == dev_or_test].loc[(df['label'] == 2)][i:i+step]]) 
+        for i in [0, 1, 2]:
+            if len(new_df.loc[(new_df['label'] == i)]['label'].to_list()) < step:
+                wrap_around = step - len(new_df.loc[(new_df['label'] == i)]['label'].to_list())
+                new_df = pd.concat([new_df, df[df['set'] == dev_or_test].loc[(df['label'] == i)][:wrap_around]])
+
+        # evaluation
+        test_docs = new_df['sent_concat'].to_list()
+        test_input_ids, test_attention_masks = tokenize(test_docs)
+
+        test_labels = torch.tensor(new_df['label'].to_list())
+        test_dataset = TensorDataset(test_input_ids, test_attention_masks, test_labels)
+        test_dataloader = DataLoader(
+                    test_dataset,
+                    sampler=SequentialSampler(test_dataset),  # Pull out batches sequentially
+                    batch_size=batch_size
+                )
+        
+        test_set_predictions, test_set_proba = evaluation(test_dataloader, device, model_name, model, criterion, logsoftmax)
+        test_labels = new_df['label'].to_list()
+
+        full_test_y_true.extend(test_set_predictions)
+        full_test_y_pred.extend(test_labels)
+
+        macro_f1 = f1_score(test_labels, test_set_predictions, average='macro')
+        all_macroF1 += macro_f1
+        roc_auc_test = roc_auc_score(test_labels, test_set_proba, average='macro', multi_class='ovo')
+        all_roc_auc += roc_auc_test
+
+        f1_less, f1_eq, f1_more = f1_one_vs_all(test_labels, test_set_predictions, class_label=0), \
+                                f1_one_vs_all(test_labels, test_set_predictions, class_label=1), \
+                                f1_one_vs_all(test_labels, test_set_predictions, class_label=2)
+        all_label1_F1 += f1_less
+        all_label2_F2 += f1_eq
+        all_label3_F3 += f1_more
+        iterations += 1
+    print()
+    print("average stats")
+    avr_MacroF1 = all_macroF1 / iterations
+    avr_roc_auc = all_roc_auc / iterations
+    print("macro F1:")
+    print('{} set: {:.3}'.format(dev_or_test, avr_MacroF1))
+    print("auc-roc-score:")
+    print('{} set: {:.3}'.format(dev_or_test, avr_roc_auc))
+    avr_label1_F1 = all_label1_F1 / iterations
+    avr_label2_F2 = all_label2_F2 / iterations
+    avr_label3_F3 = all_label3_F3 / iterations
+    print(f'\nclass-wise F1 scores for the {dev_or_test} set:')
+    print(f'1: {avr_label1_F1:.2f}\n2: {avr_label2_F2:.2f}\n3: {avr_label3_F3:.2f}')
+
+    # create confusion matrix
+    norm_setting = 'true'
+    test_conf_matr = confusion_matrix(full_test_y_true, full_test_y_pred, normalize=norm_setting)
+    test_conf_matr = pd.DataFrame(test_conf_matr, columns=['Less likely', 'Equally likely', 'More likely'],
+                                index=['Less likely', 'Equally likely', 'More likely'])
+    print("")
+    print("True\\Predicted:")
+    print(test_conf_matr)
+
 
 if __name__ == '__main__':
     balanced = True  # switch between balanced and full dataset
-    run_ID = 12  # to identify the results later
+    run_ID = 104  # to identify the results later
     epochs = 3
     balance_test = False  # enable balancing the test and dev datasets
+    crossvalidate = True  # enable crossvalidation on the test set, balance_test has to be False
     model_path = ""  # give a path to load a saved model
 
     # take console input to pick a model
@@ -142,12 +248,12 @@ if __name__ == '__main__':
     # Balance the dev and test by randomly sampling datapoints to match the smallest class
     if balance_test:
         test = pd.concat([
-            test[test['label'].isin([2])], # [0, 2]
+            test[test['label'].isin([2])],
             test[test['label'] == 0].sample(101, random_state=seed_val),
             test[test['label'] == 1].sample(101, random_state=seed_val)
         ])
         dev = pd.concat([
-            dev[dev['label'].isin([0,2])], # [0, 2]
+            dev[dev['label'].isin([2])],
             dev[dev['label'] == 0].sample(102, random_state=seed_val),
             dev[dev['label'] == 1].sample(102, random_state=seed_val)
         ])
@@ -309,7 +415,6 @@ if __name__ == '__main__':
                 scheduler.step()
 
                 del batch
-                # break  # 1 batch run for sanity checks
 
             avg_train_loss = total_train_loss / len(train_dataloader)
             training_time = format_time(time.time() - t0)
@@ -378,56 +483,38 @@ if __name__ == '__main__':
         print("Total training took {:} (h:mm:ss)".format(format_time(time.time()-total_t0)))
 
     # evaluate the model on the test data
-    print("Evaluating...")
-    test_set_predictions = []
-    for batch in tqdm(test_dataloader):
-            b_input_ids = batch[0].to(device)
-            b_input_mask = batch[1].to(device)
-            b_labels = batch[2].to(device)
+    if crossvalidate:
+        crossvalidation(df, device, model_name, model, criterion, logsoftmax, dev_or_test = 'test')
+    else:
+        test_set_predictions, test_set_proba = evaluation(test_dataloader, device, model_name, model, criterion, logsoftmax)
+        
+        # create confusion matrix
+        norm_setting = 'true'
+        test_conf_matr = confusion_matrix(df[df['set'] == 'test']['label'].to_list(), test_set_predictions,
+                                        normalize=norm_setting)
+        test_conf_matr = pd.DataFrame(test_conf_matr, columns=['Less likely', 'Equally likely', 'More likely'],
+                                    index=['Less likely', 'Equally likely', 'More likely'])
+        print("")
+        print("True\\Predicted:")
+        print(test_conf_matr)
 
-            with torch.no_grad():
-                if model_name == "MPNet":
-                    output = model(b_input_ids,
-                                    attention_mask=b_input_mask,
-                                    labels=b_labels)
-                else:
-                    output = model(b_input_ids,
-                                    token_type_ids=None,
-                                    attention_mask=b_input_mask,
-                                    labels=b_labels)
-            loss, logits = output.loss, output.logits
-            pred_proba = softmax(logits, dim=-1).detach().cpu().numpy() 
-            predictions = np.argmax(logits.detach().cpu().numpy(), axis=1).flatten()  
-            test_set_predictions.append(predictions)
-            test_set_proba.append(pred_proba)
+        # print stats
+        test_labels = df[df['set'] == 'test']['label'].to_list()
+        print("")
+        print("macro F1:")
+        print('test set: {:.3}'.format(f1_score(df[df['set'] == 'test']['label'].to_list(), test_set_predictions, average='macro')))
+        print("\nweighted F1:")
+        print('test set: {:.3}'.format(f1_score(df[df['set'] == 'test']['label'].to_list(), test_set_predictions, average='weighted')))
+        
+        print("\nroc-auc score: ")
+        roc_auc_test = roc_auc_score(test_labels, test_set_proba, average='macro', multi_class='ovo')
+        print(f'test set: {roc_auc_test:.2f}')
 
-            del batch
-   
-    # create confusion matrix
-    test_set_predictions = np.concatenate(test_set_predictions, axis=0)
-    test_set_proba = np.concatenate(test_set_proba, axis=0)
-    norm_setting = 'true'
-    test_conf_matr = confusion_matrix(df[df['set'] == 'test']['label'].to_list(), test_set_predictions,
-                                    normalize=norm_setting)
-    test_conf_matr = pd.DataFrame(test_conf_matr, columns=['Less likely', 'Equally likely', 'More likely'],
-                                index=['Less likely', 'Equally likely', 'More likely'])
-    print("")
-    print("True\\Predicted:")
-    print(test_conf_matr)
+        f1_less, f1_eq, f1_more = f1_one_vs_all(test_labels, test_set_predictions, class_label=0), \
+                                f1_one_vs_all(test_labels, test_set_predictions, class_label=1), \
+                                f1_one_vs_all(test_labels, test_set_predictions, class_label=2)
+        print("\nclass-wise F1 scores for the test set:")
+        print(f'1: {f1_less:.2f}\n2: {f1_eq:.2f}\n3: {f1_more:.2f}')
 
-    # print stats
-    print("")
-    print("macro F1:")
-    print('test set: {:.3}'.format(f1_score(df[df['set'] == 'test']['label'].to_list(), test_set_predictions, average='macro')))
-    print("\nweighted F1:")
-    print('test set: {:.3}'.format(f1_score(df[df['set'] == 'test']['label'].to_list(), test_set_predictions, average='weighted')))
 
-    test_labels = df[df['set'] == 'test']['label'].to_list()
-    f1_less, f1_eq, f1_more = f1_one_vs_all(test_labels, test_set_predictions, class_label=0), \
-                            f1_one_vs_all(test_labels, test_set_predictions, class_label=1), \
-                            f1_one_vs_all(test_labels, test_set_predictions, class_label=2)
-    print("\nclass-wise F1 scores for the test set:")
-    print(f'1 - Less likely: {f1_less:.2f}\n2 - Equally likely: {f1_eq:.2f}\n3 - More likely: {f1_more:.2f}')
 
-    roc_auc_test = roc_auc_score(test_labels, test_set_proba, average='macro', multi_class='ovo')
-    print(f'\nROC-AUC: {roc_auc_test:.2f}')
