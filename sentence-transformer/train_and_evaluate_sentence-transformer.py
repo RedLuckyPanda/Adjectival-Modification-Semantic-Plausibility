@@ -6,7 +6,7 @@ import datetime
 import pandas as pd
 import numpy as np
 from torch.optim import AdamW
-from sklearn.metrics import f1_score, confusion_matrix
+from sklearn.metrics import f1_score, confusion_matrix, accuracy_score
 from torch.utils.data import DataLoader, RandomSampler
 from sentence_transformers import SentenceTransformer, LoggingHandler, losses, util, InputExample
 
@@ -40,7 +40,22 @@ def f1_one_vs_all(true, pred, class_label):
     return f1_score(true, pred)
 
 
-def crossvalidation(df, model):
+def cross_balancing(df, model, dev_or_test='test'):
+    """
+    evaluation on the whole test set in chunks that contain the number of instances for each class
+
+    step: the number of intances for each class per iteration, equal to the smallest class
+    
+    The method iterates over the instances in the three classes until all instances of the biggest class were seen.
+    \nThis way, every instance in the test set is part of the evaluation.
+    \nAn evaluation is done on each chunk, the resulting values are averaged to achieve results that are representative 
+    of the models performance on the whole test set without any bias caused by class imbalance.
+    """
+    if dev_or_test == 'test':
+        step = 101
+    else:
+        dev_or_test = 'dev'
+        step = 102
     step = 101
     full_test_y_true = []
     full_test_y_pred = []
@@ -48,15 +63,17 @@ def crossvalidation(df, model):
     all_label1_F1 = 0
     all_label2_F2 = 0
     all_label3_F3 = 0
-    for i in range(1, len(df[df['set'] == 'test'].loc[(df['label'] == 0.5)]['label'].to_list())+1, step):
+    all_acc = 0
+    iterations = 0
+    for i in range(1, len(df[df['set'] == dev_or_test].loc[(df['label'] == 0.5)]['label'].to_list())+1, step):
         # get df slices containing 101 entries for each label
-        new_df = df[df['set'] == 'test'].loc[(df['label'] == 0)][i:i+step]
-        new_df = pd.concat([new_df, df[df['set'] == 'test'].loc[(df['label'] == 0.5)][i:i+step]]) 
-        new_df = pd.concat([new_df, df[df['set'] == 'test'].loc[(df['label'] == 1)][i:i+step]]) 
+        new_df = df[df['set'] == dev_or_test].loc[(df['label'] == 0)][i:i+step]
+        new_df = pd.concat([new_df, df[df['set'] == dev_or_test].loc[(df['label'] == 0.5)][i:i+step]]) 
+        new_df = pd.concat([new_df, df[df['set'] == dev_or_test].loc[(df['label'] == 1)][i:i+step]]) 
         for i in [0, 0.5, 1]:
             if len(new_df.loc[(new_df['label'] == i)]['label'].to_list()) < step:
                 wrap_around = step - len(new_df.loc[(new_df['label'] == i)]['label'].to_list())
-                new_df = pd.concat([new_df, df[df['set'] == 'test'].loc[(df['label'] == i)][:wrap_around]])
+                new_df = pd.concat([new_df, df[df['set'] == dev_or_test].loc[(df['label'] == i)][:wrap_around]])
         new_df = new_df.drop(columns=['sent_concat'])
 
         # evaluation
@@ -74,9 +91,9 @@ def crossvalidation(df, model):
         # map the continous cosine similarities to the three classes
         test_y_pred = []
         for i in range(len(test_sent1)):
-            if test_cosine_scores[i][i] <= lower_threshold:
+            if test_cosine_scores[i][i] <= 0.33:
                 test_y_pred.append(0)
-            elif test_cosine_scores[i][i] >= upper_threshold:
+            elif test_cosine_scores[i][i] >= 0.66:
                 test_y_pred.append(2)
             else: test_y_pred.append(1)
         test_y_true = [x*2 for x in new_df['label'].to_list()]
@@ -93,16 +110,25 @@ def crossvalidation(df, model):
         all_label1_F1 += f1_less
         all_label2_F2 += f1_eq
         all_label3_F3 += f1_more
+
+        acc = accuracy_score(test_y_true, test_y_pred)
+        all_acc += acc
+        iterations += 1
     print()
     print("average stats")
-    count = 11
+    count = iterations
+    print(f'ITERATIONS: {iterations}')
+    print()
     avr_MacroF1 = all_macroF1 / count
     print("macro F1:")
-    print('test set: {:.3}'.format(avr_MacroF1))
+    print('{} set: {:.3}'.format(dev_or_test, avr_MacroF1))
+    avr_acc = all_acc / count
+    print("Accuracy:")
+    print('{} set: {:.3}'.format(dev_or_test, avr_acc))
     avr_label1_F1 = all_label1_F1 / count
     avr_label2_F2 = all_label2_F2 / count
     avr_label3_F3 = all_label3_F3 / count
-    print("\nclass-wise F1 scores for the test set:")
+    print(f"\nclass-wise F1 scores for the {dev_or_test} set:")
     print(f'1: {avr_label1_F1:.2f}\n2: {avr_label2_F2:.2f}\n3: {avr_label3_F3:.2f}')
 
     # create confusion matrix
@@ -119,10 +145,10 @@ if __name__ == '__main__':
     # switch model here: currently only supports all-mpnet-base-v2
     model_name = "all-mpnet-base-v2"
     balanced = True  # switch between balanced and full dataset
-    run_ID = 102  # to identify the results later (restarted count at 100 to differentiate new runs)
+    run_ID = 23  # to identify the results later
     epochs = 4
     balance_test = False  # enable balancing the test and dev datasets
-    crossvalidate = True  # enable crossvalidation on the test set, balance_test has to be False
+    cross_balance = True  # enable cross-balancing on the test set, balance_test has to be False
     model_path = ""  # give a path to load a saved model
     lower_threshold = 0.33
     upper_threshold = 0.66
@@ -243,8 +269,8 @@ if __name__ == '__main__':
     model.eval()
     model.cpu()
 
-    if crossvalidate:
-        crossvalidation(df, model)
+    if cross_balance:
+        cross_balancing(df, model)
     else:
         # evaluate on the test set
         test_sent1 = df[df['set'] == 'test']['sentence1'].to_list()
