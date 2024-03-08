@@ -270,7 +270,7 @@ if __name__ == '__main__':
     model.cpu()
 
     if cross_balance:
-        cross_balancing(df, model)
+        cross_balancing(df, model, dev_or_test='test')
     else:
         # evaluate on the test set
         test_sent1 = df[df['set'] == 'test']['sentence1'].to_list()
