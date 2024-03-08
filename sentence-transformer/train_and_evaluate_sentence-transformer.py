@@ -309,6 +309,8 @@ if __name__ == '__main__':
         print('test set: {:.3}'.format(f1_score(test_y_true, test_y_pred, average='macro')))
         print("\nweighted F1:")
         print('test set: {:.3}'.format(f1_score(test_y_true, test_y_pred, average='weighted')))
+        print("\nAccuracy:")
+        print('{} set: {:.3}'.format(accuracy_score(test_y_true, test_y_pred)))
 
         test_labels = df[df['set'] == 'test']['label'].to_list()
         f1_less, f1_eq, f1_more = f1_one_vs_all(test_y_true, test_y_pred, class_label=0), \
