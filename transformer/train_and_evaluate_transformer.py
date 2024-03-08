@@ -8,7 +8,7 @@ import seaborn as sns
 from tqdm import tqdm
 from typing import Tuple
 from torch.optim import AdamW
-from sklearn.metrics import f1_score, confusion_matrix, roc_auc_score
+from sklearn.metrics import f1_score, confusion_matrix, roc_auc_score, accuracy_score
 from transformers import get_linear_schedule_with_warmup
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from torch.nn.functional import softmax
@@ -109,7 +109,17 @@ def evaluation(test_dataloader, device, model_name, model, criterion, logsoftmax
     test_set_proba = np.concatenate(test_set_proba, axis=0)
     return test_set_predictions, test_set_proba
 
-def crossvalidation(df, device, model_name, model, criterion, logsoftmax, dev_or_test='test'):
+def cross_balancing(df, device, model_name, model, criterion, logsoftmax, dev_or_test='test'):
+    """
+    evaluation on the whole test set in chunks that contain the number of instances for each class
+
+    step: the number of intances for each class per iteration, equal to the smallest class
+    
+    The method iterates over the instances in the three classes until all instances of the biggest class were seen.
+    \nThis way, every instance in the test set is part of the evaluation.
+    \nAn evaluation is done on each chunk, the resulting values are averaged to achieve results that are representative 
+    of the models performance on the whole test set without any bias caused by class imbalance.
+    """
     if dev_or_test == 'test':
         step = 101
     else:
@@ -122,6 +132,7 @@ def crossvalidation(df, device, model_name, model, criterion, logsoftmax, dev_or
     all_label1_F1 = 0
     all_label2_F2 = 0
     all_label3_F3 = 0
+    all_accuracy = 0
     iterations = 0
     for i in range(1, len(df[df['set'] == dev_or_test].loc[(df['label'] == 1)]['label'].to_list())+1, step):
         # get df slices containing 101 entries for each label
@@ -162,6 +173,10 @@ def crossvalidation(df, device, model_name, model, criterion, logsoftmax, dev_or
         all_label1_F1 += f1_less
         all_label2_F2 += f1_eq
         all_label3_F3 += f1_more
+
+        accuracy = accuracy_score(test_labels, test_set_predictions)
+        all_accuracy += accuracy
+
         iterations += 1
     print()
     print("average stats")
@@ -171,6 +186,8 @@ def crossvalidation(df, device, model_name, model, criterion, logsoftmax, dev_or
     print('{} set: {:.3}'.format(dev_or_test, avr_MacroF1))
     print("auc-roc-score:")
     print('{} set: {:.3}'.format(dev_or_test, avr_roc_auc))
+    avr_accuracy = all_accuracy / iterations
+    print(f'Accuracy: {avr_accuracy:.3f}')
     avr_label1_F1 = all_label1_F1 / iterations
     avr_label2_F2 = all_label2_F2 / iterations
     avr_label3_F3 = all_label3_F3 / iterations
@@ -189,10 +206,10 @@ def crossvalidation(df, device, model_name, model, criterion, logsoftmax, dev_or
 
 if __name__ == '__main__':
     balanced = True  # switch between balanced and full dataset
-    run_ID = 104  # to identify the results later
+    run_ID = 24  # to identify the results later
     epochs = 3
     balance_test = False  # enable balancing the test and dev datasets
-    crossvalidate = True  # enable crossvalidation on the test set, balance_test has to be False
+    cross_balance = True  # enable crossvalidation on the test set, balance_test has to be False
     model_path = ""  # give a path to load a saved model
 
     # take console input to pick a model
@@ -483,8 +500,8 @@ if __name__ == '__main__':
         print("Total training took {:} (h:mm:ss)".format(format_time(time.time()-total_t0)))
 
     # evaluate the model on the test data
-    if crossvalidate:
-        crossvalidation(df, device, model_name, model, criterion, logsoftmax, dev_or_test = 'test')
+    if cross_balance:
+        cross_balancing(df, device, model_name, model, criterion, logsoftmax, dev_or_test = 'test')
     else:
         test_set_predictions, test_set_proba = evaluation(test_dataloader, device, model_name, model, criterion, logsoftmax)
         
