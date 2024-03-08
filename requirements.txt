@@ -6,3 +6,4 @@ scikit-learn
 transformers
 sentence-transformers
 notebook
+deepsig
