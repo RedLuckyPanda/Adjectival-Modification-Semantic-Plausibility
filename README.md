@@ -20,6 +20,10 @@ To run the code, please do the following:
 7. To train and evaluate a **transformer** model, run: `python transformer/train_and_evaluate_transformer.py`
 8. To train and evaluate the **sentence-transformer** model, run: `python sentence-transformer/train_and_evaluate_sentence-transformer.py`
 
+## Project Results
+
+Available here: https://docs.google.com/spreadsheets/d/1AT1-zhi3iSA1e6WamGoMFsS19wnBn9xpbXDEWsSPjgY/edit?usp=sharing
+
 ## References
 The code is partially based on these tutorials:
 1. [BERT Fine-Tuning Tutorial with PyTorch](https://mccormickml.com/2019/07/22/BERT-fine-tuning/) By Chris McCormick and Nick Ryan
