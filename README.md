@@ -1,4 +1,4 @@
-# Modeling Chnage in Semantic Plausibility
+# Modeling Change in Semantic Plausibility
 
 ## Code Structure
 This repository is dedicated to modeling semantic plausibility with the use of large language models and the [ADEPT](https://aclanthology.org/2021.acl-long.553/) dataset.
