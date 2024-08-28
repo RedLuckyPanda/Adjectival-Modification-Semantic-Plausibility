@@ -1,4 +1,4 @@
-# Modeling Semantic Plausibility (WS 2023/24) - Anna Golub and Beate Zywietz
+# Modeling Chnage in Semantic Plausibility
 
 ## Code Structure
 This repository is dedicated to modeling semantic plausibility with the use of large language models and the [ADEPT](https://aclanthology.org/2021.acl-long.553/) dataset.
@@ -15,7 +15,7 @@ The `significance_testing` folder contains the Jupyter notebook and data for run
 To run the code, please do the following:
 1. Make sure your installation of Python is >**version 3.10**< or higher. If necessary, [update Python](https://www.python.org/downloads/).
 2. Clone the repository to your system with `git clone`
-3. Go to the repository directory: `cd SemanticPlausibility_23-24`
+3. Go to the repository directory: `cd ModelingSemanticPlausibility-5A22`
 4. Install the project dependencies: `pip install -r requirements.txt`
 5. Follow [the instructions](https://pytorch.org/get-started/locally/) to install `pytorch`.
 6. To run one of the Jupyter notebooks, use this command: `jupyter notebook`. The Jupyter interface will open in a browser window, where you can navigate through the file system and choose a notebook to run.
