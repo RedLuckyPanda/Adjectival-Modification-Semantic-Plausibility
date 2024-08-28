@@ -9,7 +9,7 @@ The `sentence-transformer` folder contains the code for fine-tuning a pre-traine
 
 The `transformer` folder contains the code for fine-tuning pre-trained transformer models ([BERT](https://huggingface.co/docs/transformers/model_doc/bert), [DeBERTa](https://huggingface.co/docs/transformers/model_doc/deberta), [RoBERTa](https://huggingface.co/docs/transformers/model_doc/roberta), [MPNet](https://huggingface.co/microsoft/mpnet-base)) on the ADEPT dataset with performance evaluation. Same as the `sentence-transformer` folder, the `transformer` folder contains a Jupyter notebook with comments and the same code as a Python executable file.
 
-The `significance_testing` folder contains the Jupyter notebook and data for running the significance testing on model performance metrics.
+The `significance_testing` folder contains the Jupyter notebook for running the significance testing on model performance metrics and resulting model ranking.
 
 ## Quick Start
 To run the code, please do the following:
@@ -21,10 +21,6 @@ To run the code, please do the following:
 6. To run one of the Jupyter notebooks, use this command: `jupyter notebook`. The Jupyter interface will open in a browser window, where you can navigate through the file system and choose a notebook to run.
 7. To train and evaluate a **transformer** model, run: `python transformer/train_and_evaluate_transformer.py`
 8. To train and evaluate the **sentence-transformer** model, run: `python sentence-transformer/train_and_evaluate_sentence-transformer.py`
-
-## Project Results
-
-Available here: https://docs.google.com/spreadsheets/d/1AT1-zhi3iSA1e6WamGoMFsS19wnBn9xpbXDEWsSPjgY/edit?usp=sharing
 
 ## References
 The code is partially based on these tutorials:
