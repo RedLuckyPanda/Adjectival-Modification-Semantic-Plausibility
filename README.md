@@ -1,7 +1,7 @@
 # Modeling Change in Semantic Plausibility
 
 ## Code Structure
-This repository is dedicated to modeling semantic plausibility with the use of large language models and the [ADEPT](https://aclanthology.org/2021.acl-long.553/) dataset.
+This repository is dedicated to modeling change in semantic plausibility with the use of large language models and the [ADEPT](https://aclanthology.org/2021.acl-long.553/) dataset.
 
 The `dataset_analysis` folder contains the `adept_dataset_analysis` jupyter notebook. It provides a first look at the data using descriptive statistics (first submission).
 
