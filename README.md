@@ -16,7 +16,7 @@ To run the code, please do the following:
 1. Make sure your installation of Python is >**version 3.10**< or higher. If necessary, [update Python](https://www.python.org/downloads/).
 2. Clone the repository to your system with `git clone`
 3. Go to the repository directory: `cd ModelingSemanticPlausibility-5A22`
-4. Download the [ADEPT](https://github.com/aemami1/adept/tree/master/ADEPT_Dataset) dataset and put it in "datasets/adept/train-dev-test-split/" in the main repository
+4. Download the [ADEPT](https://github.com/aemami1/adept/tree/master/ADEPT_Dataset) dataset and put it in the "datasets/adept/train-dev-test-split/" subfolder.
 6. Install the project dependencies: `pip install -r requirements.txt`
 7. Follow [the instructions](https://pytorch.org/get-started/locally/) to install `pytorch`.
 8. To run one of the Jupyter notebooks, use this command: `jupyter notebook`. The Jupyter interface will open in a browser window, where you can navigate through the file system and choose a notebook to run.
