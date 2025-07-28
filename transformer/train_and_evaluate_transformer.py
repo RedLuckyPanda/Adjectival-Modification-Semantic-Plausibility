@@ -159,8 +159,8 @@ def cross_balancing(df, device, model_name, model, criterion, logsoftmax, dev_or
         test_set_predictions, test_set_proba = evaluation(test_dataloader, device, model_name, model, criterion, logsoftmax)
         test_labels = new_df['label'].to_list()
 
-        full_test_y_true.extend(test_set_predictions)
-        full_test_y_pred.extend(test_labels)
+        full_test_y_true.extend(test_labels)
+        full_test_y_pred.extend(test_set_predictions)
 
         macro_f1 = f1_score(test_labels, test_set_predictions, average='macro')
         all_macroF1 += macro_f1
