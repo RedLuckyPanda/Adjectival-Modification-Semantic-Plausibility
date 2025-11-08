@@ -17,7 +17,7 @@ The `significance_testing` folder contains the Jupyter notebook for running the 
 To run the code, please do the following:
 1. Make sure your installation of Python is >**version 3.10**< or higher. If necessary, [update Python](https://www.python.org/downloads/).
 2. Clone the repository to your system with `git clone`
-3. Go to the repository directory: `cd ModelingSemanticPlausibility-5A22`
+3. Go to the repository directory: `cd Adjectival-Modification-Semantic-Plausibility`
 4. Download the [ADEPT](https://github.com/aemami1/adept/tree/master/ADEPT_Dataset) dataset and put it in the "datasets/adept/train-dev-test-split/" subfolder.
 5. Install the project dependencies: `pip install -r requirements.txt`
 6. Follow [the instructions](https://pytorch.org/get-started/locally/) to install `pytorch`.
