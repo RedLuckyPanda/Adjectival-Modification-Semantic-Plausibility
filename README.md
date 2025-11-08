@@ -9,6 +9,8 @@ The `sentence-transformer` folder contains the code for fine-tuning a pre-traine
 
 The `transformer` folder contains the code for fine-tuning pre-trained transformer models ([BERT](https://huggingface.co/docs/transformers/model_doc/bert), [DeBERTa](https://huggingface.co/docs/transformers/model_doc/deberta), [RoBERTa](https://huggingface.co/docs/transformers/model_doc/roberta), [MPNet](https://huggingface.co/microsoft/mpnet-base)) on the ADEPT dataset with performance evaluation. Same as the `sentence-transformer` folder, the `transformer` folder contains a Jupyter notebook with comments and the same code as a Python executable file.
 
+The `llm` folder contains the code for evaluating [Mistral-7B-Instruct-v0.3](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3) on the ADEPT test and dev sets in a zero-shot setting. Same as the `sentence-transformer` folder, the `llm` folder contains a Jupyter notebook with comments and the same code as a Python executable file.
+
 The `significance_testing` folder contains the Jupyter notebook for running the significance testing on model performance metrics and resulting model ranking.
 
 ## Quick Start
@@ -17,11 +19,12 @@ To run the code, please do the following:
 2. Clone the repository to your system with `git clone`
 3. Go to the repository directory: `cd ModelingSemanticPlausibility-5A22`
 4. Download the [ADEPT](https://github.com/aemami1/adept/tree/master/ADEPT_Dataset) dataset and put it in the "datasets/adept/train-dev-test-split/" subfolder.
-6. Install the project dependencies: `pip install -r requirements.txt`
-7. Follow [the instructions](https://pytorch.org/get-started/locally/) to install `pytorch`.
-8. To run one of the Jupyter notebooks, use this command: `jupyter notebook`. The Jupyter interface will open in a browser window, where you can navigate through the file system and choose a notebook to run.
-9. To train and evaluate a **transformer** model, run: `python transformer/train_and_evaluate_transformer.py`
-10. To train and evaluate the **sentence-transformer** model, run: `python sentence-transformer/train_and_evaluate_sentence-transformer.py`
+5. Install the project dependencies: `pip install -r requirements.txt`
+6. Follow [the instructions](https://pytorch.org/get-started/locally/) to install `pytorch`.
+7. To run one of the Jupyter notebooks, use this command: `jupyter notebook`. The Jupyter interface will open in a browser window, where you can navigate through the file system and choose a notebook to run.
+8. To train and evaluate a **transformer** model, run: `python transformer/train_and_evaluate_transformer.py`
+9. To train and evaluate the **sentence-transformer** model, run: `python sentence-transformer/train_and_evaluate_sentence-transformer.py`
+10. To evaluate the zero-shot LLM **Mistral**, run: `python llm/llm_zero_shot.py`
 
 ## References
 The code is partially based on these tutorials:
